@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  --color-background: #0a0a0a;
+  --color-foreground: #fafafa;
+  
+  --color-card: #111111;
+  --color-card-foreground: #fafafa;
+  
+  --color-primary: #e10600;
+  --color-primary-foreground: #ffffff;
+  
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #a3a3a3;
+  
+  --color-muted: #171717;
+  --color-muted-foreground: #737373;
+  
+  --color-accent: #e10600;
+  --color-accent-foreground: #ffffff;
+  
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #fafafa;
+  
+  --color-border: #262626;
+  --color-input: #262626;
+  --color-ring: #e10600;
+  
+  --color-gold: #fbbf24;
+  --color-silver: #94a3b8;
+  --color-bronze: #d97706;
+  
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* Racing stripe animation */
+@keyframes stripe-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 0; }
+}
+
+.racing-stripes {
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 23px,
+    var(--color-primary) 23px,
+    var(--color-primary) 27px
+  );
+  animation: stripe-scroll 1s linear infinite;
+}
+
+/* Checkered flag pattern */
+.checkered-flag {
+  background-image: 
+    linear-gradient(45deg, #000 25%, transparent 25%), 
+    linear-gradient(-45deg, #000 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #000 75%), 
+    linear-gradient(-45deg, transparent 75%, #000 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+/* Speed lines */
+@keyframes speed-lines {
+  0% { transform: translateX(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(-100px); opacity: 0; }
+}
+
+.speed-line {
+  animation: speed-lines 0.8s ease-out infinite;
+}
+
+/* Glow effect for cards */
+.card-glow {
+  box-shadow: 0 0 20px rgba(225, 6, 0, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 0 0 40px rgba(225, 6, 0, 0.3);
+}
+
+/* Leaderboard position colors */
+.position-1 { color: var(--color-gold); }
+.position-2 { color: var(--color-silver); }
+.position-3 { color: var(--color-bronze); }

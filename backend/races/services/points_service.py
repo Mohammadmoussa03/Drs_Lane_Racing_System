@@ -19,24 +19,13 @@ def get_points_for_position(position: int) -> int:
 
 @transaction.atomic
 def submit_race_results(race: Race, results_data: list[dict]) -> list[RaceResult]:
-    """
-    results_data: list of dicts, each containing:
-        driver_id, position, best_lap_ms, total_time_ms, dnf (bool), fastest_lap (bool)
+    from notifications.services.notification_service import notify_result_posted, notify_rank_change
 
-    Steps:
-    1. Create / update RaceResult rows
-    2. Award F1 points
-    3. Mark fastest-lap bonus (+1 pt, top-10 only)
-    4. Update DriverProfile stats
-    5. Update Championship standings (if race belongs to a championship)
-    6. Recalculate global leaderboard ranks
-    7. Check gamification achievements
-    8. Mark race as Completed
-    """
     created_results = []
+    fl_driver_id    = _resolve_fastest_lap(results_data)
 
-    # Determine fastest lap driver
-    fl_driver_id = _resolve_fastest_lap(results_data)
+    # Snapshot ranks before update
+    old_ranks = {d.pk: d.rank for d in __import__('users.models', fromlist=['DriverProfile']).DriverProfile.objects.all()}
 
     for entry in results_data:
         driver_profile = _get_driver(entry['driver_id'])
@@ -45,7 +34,6 @@ def submit_race_results(race: Race, results_data: list[dict]) -> list[RaceResult
         is_fl          = (entry.get('driver_id') == fl_driver_id)
 
         pts = 0 if dnf else get_points_for_position(position)
-        # Fastest lap bonus: +1 if FL driver finished in top 10
         if is_fl and not dnf and position <= 10:
             pts += 1
 
@@ -62,22 +50,29 @@ def submit_race_results(race: Race, results_data: list[dict]) -> list[RaceResult
             }
         )
         created_results.append(result)
-
         _update_driver_stats(driver_profile, position, pts, is_fl, dnf)
+
+        # Notify driver of result
+        notify_result_posted(driver_profile, race.title, position, pts, is_fl)
 
     if race.championship:
         _update_championship_standings(race.championship)
 
     _recalculate_global_ranks()
 
-    # Trigger achievement checks for all drivers in this race
+    # Notify rank changes
+    from users.models import DriverProfile
+    for driver in DriverProfile.objects.all():
+        old = old_ranks.get(driver.pk, 0)
+        notify_rank_change(driver, old, driver.rank)
+
+    # Achievements
     for result in created_results:
         check_and_award_achievements(result.driver, result)
 
     race.status = Race.STATUS_COMPLETED
     race.save(update_fields=['status'])
 
-    # Mark bookings as attended
     Booking.objects.filter(race=race, status=Booking.STATUS_CONFIRMED).update(
         status=Booking.STATUS_ATTENDED
     )
@@ -88,7 +83,6 @@ def submit_race_results(race: Race, results_data: list[dict]) -> list[RaceResult
 # ─── Internal helpers ─────────────────────────────────────────────────────────
 
 def _resolve_fastest_lap(results_data: list[dict]):
-    """Return driver_id with explicit fastest_lap=True, or the one with lowest best_lap_ms."""
     explicit = [r for r in results_data if r.get('fastest_lap')]
     if explicit:
         return explicit[0]['driver_id']
@@ -120,18 +114,17 @@ def _update_driver_stats(driver, position: int, pts: int, fastest_lap: bool, dnf
 
 
 def _update_championship_standings(championship):
-    """Recompute points for every entry in this championship from race results."""
     from races.models import RaceResult
+    from django.db.models import Sum
     entries = ChampionshipEntry.objects.filter(championship=championship).select_for_update()
     for entry in entries:
         pts = RaceResult.objects.filter(
             race__championship=championship,
             driver=entry.driver
-        ).aggregate(total=__import__('django.db.models', fromlist=['Sum']).Sum('points_awarded'))['total'] or 0
+        ).aggregate(total=Sum('points_awarded'))['total'] or 0
         entry.points = pts
         entry.save(update_fields=['points'])
 
-    # Rerank
     for rank, entry in enumerate(
         ChampionshipEntry.objects.filter(championship=championship).order_by('-points'), start=1
     ):
@@ -140,7 +133,6 @@ def _update_championship_standings(championship):
 
 
 def _recalculate_global_ranks():
-    """Update DriverProfile.rank based on total_points descending."""
     from users.models import DriverProfile
     drivers = DriverProfile.objects.order_by('-total_points').select_for_update()
     for rank, driver in enumerate(drivers, start=1):

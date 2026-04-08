@@ -1,4 +1,4 @@
-from django.db.models import F, Sum, Subquery, OuterRef
+from django.db.models import F, Sum, Subquery, OuterRef, Count, Q
 from django.utils.timezone import now
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import DriverProfile, EmailVerificationToken, PasswordResetToken
 from .serializers import (
     RegisterSerializer, DriverProfileSerializer, LeaderboardEntrySerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    PublicDriverProfileSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
 )
 from .email_utils import send_verification_email, send_password_reset_email
 from gamification.serializers import DriverAchievementSerializer
@@ -122,6 +122,108 @@ class DriverMeView(APIView):
         data['achievements'] = DriverAchievementSerializer(achievements, many=True).data
         data['email_verified'] = request.user.is_email_verified
         return Response(data)
+
+
+class PublicDriverProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, nickname):
+        try:
+            driver = DriverProfile.objects.get(nickname__iexact=nickname)
+        except DriverProfile.DoesNotExist:
+            return Response({'detail': 'Driver not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        data = PublicDriverProfileSerializer(driver).data
+
+        # Recent results (last 10)
+        from races.models import RaceResult
+        from races.serializers import RaceResultSerializer
+        recent = RaceResult.objects.filter(driver=driver).select_related('race').order_by('-created_at')[:10]
+        data['recent_results'] = RaceResultSerializer(recent, many=True).data
+
+        # Achievements
+        achievements = driver.achievements.select_related('achievement').order_by('-earned_at')
+        from gamification.serializers import DriverAchievementSerializer
+        data['achievements'] = DriverAchievementSerializer(achievements, many=True).data
+
+        return Response(data)
+
+
+class DriverVsDriverView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, nickname1, nickname2):
+        try:
+            d1 = DriverProfile.objects.get(nickname__iexact=nickname1)
+            d2 = DriverProfile.objects.get(nickname__iexact=nickname2)
+        except DriverProfile.DoesNotExist:
+            return Response({'detail': 'One or both drivers not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        from races.models import RaceResult
+
+        # Find races both drivers competed in
+        d1_race_ids = set(RaceResult.objects.filter(driver=d1).values_list('race_id', flat=True))
+        d2_race_ids = set(RaceResult.objects.filter(driver=d2).values_list('race_id', flat=True))
+        shared_race_ids = d1_race_ids & d2_race_ids
+
+        if not shared_race_ids:
+            return Response({
+                'driver1': PublicDriverProfileSerializer(d1).data,
+                'driver2': PublicDriverProfileSerializer(d2).data,
+                'shared_races': 0,
+                'message': 'These drivers have not competed against each other yet.',
+            })
+
+        d1_results = RaceResult.objects.filter(driver=d1, race_id__in=shared_race_ids)
+        d2_results = RaceResult.objects.filter(driver=d2, race_id__in=shared_race_ids)
+
+        # Head-to-head wins (lower position = better)
+        d1_wins = sum(
+            1 for race_id in shared_race_ids
+            if (r1 := d1_results.filter(race_id=race_id).first()) and
+               (r2 := d2_results.filter(race_id=race_id).first()) and
+               not r1.dnf and (r2.dnf or r1.position < r2.position)
+        )
+        d2_wins = sum(
+            1 for race_id in shared_race_ids
+            if (r1 := d1_results.filter(race_id=race_id).first()) and
+               (r2 := d2_results.filter(race_id=race_id).first()) and
+               not r2.dnf and (r1.dnf or r2.position < r1.position)
+        )
+
+        d1_stats = d1_results.aggregate(
+            avg_position   = __import__('django.db.models', fromlist=['Avg']).Avg('position'),
+            total_points   = Sum('points_awarded'),
+            fastest_laps   = Count('id', filter=Q(fastest_lap=True)),
+            podiums        = Count('id', filter=Q(position__lte=3, dnf=False)),
+        )
+        d2_stats = d2_results.aggregate(
+            avg_position   = __import__('django.db.models', fromlist=['Avg']).Avg('position'),
+            total_points   = Sum('points_awarded'),
+            fastest_laps   = Count('id', filter=Q(fastest_lap=True)),
+            podiums        = Count('id', filter=Q(position__lte=3, dnf=False)),
+        )
+
+        return Response({
+            'driver1': {
+                **PublicDriverProfileSerializer(d1).data,
+                'h2h_wins':       d1_wins,
+                'shared_points':  d1_stats['total_points'] or 0,
+                'avg_position':   round(d1_stats['avg_position'] or 0, 2),
+                'fastest_laps':   d1_stats['fastest_laps'],
+                'podiums':        d1_stats['podiums'],
+            },
+            'driver2': {
+                **PublicDriverProfileSerializer(d2).data,
+                'h2h_wins':       d2_wins,
+                'shared_points':  d2_stats['total_points'] or 0,
+                'avg_position':   round(d2_stats['avg_position'] or 0, 2),
+                'fastest_laps':   d2_stats['fastest_laps'],
+                'podiums':        d2_stats['podiums'],
+            },
+            'shared_races': len(shared_race_ids),
+            'verdict': d1.nickname if d1_wins > d2_wins else (d2.nickname if d2_wins > d1_wins else 'Tied'),
+        })
 
 
 class LeaderboardView(generics.ListAPIView):

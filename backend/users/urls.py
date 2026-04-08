@@ -4,6 +4,7 @@ from .views import (
     RegisterView, VerifyEmailView, ResendVerificationView,
     PasswordResetRequestView, PasswordResetConfirmView,
     ProfileView, DriverMeView, LeaderboardView,
+    PublicDriverProfileView, DriverVsDriverView,
 )
 
 urlpatterns = [
@@ -20,6 +21,8 @@ urlpatterns = [
     path('auth/password-reset/',          PasswordResetRequestView.as_view(),   name='password_reset_request'),
     path('auth/password-reset/confirm/',  PasswordResetConfirmView.as_view(),   name='password_reset_confirm'),
     # Driver
-    path('drivers/me/',                   DriverMeView.as_view(),               name='driver_me'),
-    path('drivers/leaderboard/',          LeaderboardView.as_view(),            name='leaderboard'),
+    path('drivers/me/',                              DriverMeView.as_view(),            name='driver_me'),
+    path('drivers/leaderboard/',                     LeaderboardView.as_view(),         name='leaderboard'),
+    path('drivers/<str:nickname>/',                  PublicDriverProfileView.as_view(), name='public_driver_profile'),
+    path('drivers/<str:nickname1>/vs/<str:nickname2>/', DriverVsDriverView.as_view(),  name='driver_vs_driver'),
 ]

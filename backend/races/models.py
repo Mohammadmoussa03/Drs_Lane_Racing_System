@@ -95,6 +95,9 @@ class Booking(models.Model):
     # Payment (placeholder for future payment gateway)
     amount_paid    = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
     payment_ref    = models.CharField(max_length=100, blank=True)
+    # Check-in
+    checked_in     = models.BooleanField(default=False)
+    checked_in_at  = models.DateTimeField(null=True, blank=True)
     booked_at      = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)
 

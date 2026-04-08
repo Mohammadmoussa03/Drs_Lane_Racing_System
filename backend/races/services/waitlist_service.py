@@ -79,8 +79,10 @@ def promote_next_from_waitlist(race: Race) -> Optional[Booking]:
         race.status = Race.STATUS_OPEN
         race.save(update_fields=['status'])
 
-    # Non-blocking email notification
+    # Email + in-app notification
     send_waitlist_promoted_email(next_entry.driver, race)
+    from notifications.services.notification_service import notify_waitlist_promoted
+    notify_waitlist_promoted(next_entry.driver, race.title)
 
     return booking
 

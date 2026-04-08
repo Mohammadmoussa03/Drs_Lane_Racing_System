@@ -55,6 +55,10 @@ def _check(driver, code: str, condition: bool):
 
     DriverAchievement.objects.create(driver=driver, achievement=achievement)
 
+    # Notify driver
+    from notifications.services.notification_service import notify_achievement
+    notify_achievement(driver, achievement.name, achievement.points_bonus)
+
     # Credit bonus points if any
     if achievement.points_bonus:
         driver.total_points += achievement.points_bonus

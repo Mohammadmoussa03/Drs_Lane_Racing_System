@@ -70,6 +70,26 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
         fields = ('id', 'nickname', 'avatar', 'total_points', 'wins', 'podiums', 'rank', 'skill_tier')
 
 
+class PublicDriverProfileSerializer(serializers.ModelSerializer):
+    achievements_count = serializers.SerializerMethodField()
+    championships_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model  = DriverProfile
+        fields = (
+            'id', 'nickname', 'avatar', 'bio',
+            'total_races', 'wins', 'podiums', 'fastest_laps',
+            'total_points', 'rank', 'skill_tier',
+            'achievements_count', 'championships_count', 'created_at',
+        )
+
+    def get_achievements_count(self, obj):
+        return obj.achievements.count()
+
+    def get_championships_count(self, obj):
+        return obj.championship_entries.count()
+
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

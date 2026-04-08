@@ -108,6 +108,73 @@ class RaceViewSet(viewsets.ModelViewSet):
         results = race.results.select_related('driver').order_by('position')
         return Response(RaceResultSerializer(results, many=True).data)
 
+    # ── Check-In ──────────────────────────────────────────────────────────────
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated], url_path='checkin')
+    def checkin(self, request, pk=None):
+        """
+        Driver self-check-in:  POST /api/races/{id}/checkin/
+        Admin check-in any driver: POST /api/races/{id}/checkin/ with { driver_id: X }
+        """
+        from django.utils import timezone
+        from notifications.services.notification_service import notify_checkin
+
+        race = self.get_object()
+
+        if request.user.is_staff and 'driver_id' in request.data:
+            from users.models import DriverProfile
+            try:
+                driver = DriverProfile.objects.get(pk=request.data['driver_id'])
+            except DriverProfile.DoesNotExist:
+                return Response({'detail': 'Driver not found.'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            driver = request.user.driver_profile
+
+        booking = Booking.objects.filter(
+            driver=driver, race=race, status=Booking.STATUS_CONFIRMED
+        ).first()
+
+        if not booking:
+            return Response({'detail': 'No confirmed booking found for this driver.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if booking.checked_in:
+            return Response({'detail': 'Driver already checked in.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        booking.checked_in    = True
+        booking.checked_in_at = timezone.now()
+        booking.save(update_fields=['checked_in', 'checked_in_at'])
+
+        notify_checkin(driver, race.title)
+
+        return Response({
+            'detail':        f'{driver.nickname} checked in for {race.title}.',
+            'checked_in_at': booking.checked_in_at,
+        })
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAdminUser], url_path='grid')
+    def grid(self, request, pk=None):
+        """Admin race-day grid view: all confirmed drivers + check-in status."""
+        race     = self.get_object()
+        bookings = Booking.objects.filter(
+            race=race, status=Booking.STATUS_CONFIRMED
+        ).select_related('driver').order_by('booked_at')
+
+        data = [{
+            'driver_id':      b.driver.id,
+            'nickname':       b.driver.nickname,
+            'skill_tier':     b.driver.skill_tier,
+            'checked_in':     b.checked_in,
+            'checked_in_at':  b.checked_in_at,
+            'booking_id':     b.id,
+        } for b in bookings]
+
+        return Response({
+            'race':           RaceSerializer(race).data,
+            'total_booked':   len(data),
+            'total_checked_in': sum(1 for d in data if d['checked_in']),
+            'grid':           data,
+        })
+
     # ── Waitlist ──────────────────────────────────────────────────────────────
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])

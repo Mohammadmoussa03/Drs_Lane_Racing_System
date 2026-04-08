@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'races',
     'championships',
     'gamification',
+    'notifications',
 ]
 
 MIDDLEWARE = [

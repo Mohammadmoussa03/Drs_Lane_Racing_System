@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, Flag, Trophy, Users, Calendar, User } from "lucide-react";
+import { Menu, X, Flag, Trophy, Users, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [

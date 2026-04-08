@@ -1,137 +1,154 @@
+"use client";
+
 import Link from "next/link";
-import { Flag, Instagram, Twitter, Youtube } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="bg-background border-t border-border">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center transform -skew-x-6">
-                <span className="text-primary-foreground font-bold text-lg transform skew-x-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* Brand Column */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-primary rounded-sm flex items-center justify-center transform -skew-x-4">
+                <span className="text-primary-foreground font-bold text-sm transform skew-x-4">
                   DRS
                 </span>
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-foreground tracking-tight leading-none">
-                  DRS LANE
-                </span>
-                <span className="text-xs text-muted-foreground tracking-widest uppercase">
-                  Racing
-                </span>
-              </div>
-            </Link>
-            <p className="text-sm text-muted-foreground">
-              Experience the thrill of competitive karting. Race, compete, and climb the leaderboard.
+              <span className="font-bold text-lg">DRS Lane Racing</span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Experience the ultimate karting competition. Push your limits and become a champion.
             </p>
+            <div className="flex gap-4">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Instagram className="w-5 h-5" />
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Linkedin className="w-5 h-5" />
+              </a>
+            </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">
-              Racing
-            </h3>
+            <h4 className="font-bold text-foreground mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/races" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Upcoming Races
+                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Home
                 </Link>
               </li>
               <li>
-                <Link href="/championships" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Championships
+                <Link href="/races" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Races
                 </Link>
               </li>
               <li>
-                <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Leaderboard
                 </Link>
               </li>
               <li>
-                <Link href="/results" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Race Results
+                <Link href="/drivers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Drivers
+                </Link>
+              </li>
+              <li>
+                <Link href="/championships" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Championships
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Company Links */}
           <div>
-            <h3 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">
-              Company
-            </h3>
+            <h4 className="font-bold text-foreground mb-4">Company</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   About Us
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Contact
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/faq" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Terms of Service
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/safety" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Safety Guidelines
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Social */}
+          {/* Contact Info */}
           <div>
-            <h3 className="font-bold text-foreground mb-4 text-sm uppercase tracking-wider">
-              Follow Us
-            </h3>
-            <div className="flex gap-3">
-              <a
-                href="#"
-                className="w-10 h-10 bg-secondary rounded-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-secondary rounded-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-secondary rounded-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-secondary/80 transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-5 h-5" />
-              </a>
-            </div>
+            <h4 className="font-bold text-foreground mb-4">Contact</h4>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <Phone className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-sm text-muted-foreground">+1 (555) 123-4567</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <Mail className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <a href="mailto:info@drslane.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  info@drslane.com
+                </a>
+              </li>
+              <li className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <span className="text-sm text-muted-foreground">
+                  123 Racing Lane<br />
+                  San Francisco, CA 94102
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Divider */}
+        <div className="border-t border-border my-8" />
+
+        {/* Bottom */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            2026 DRS Lane Racing. All rights reserved.
+            © {currentYear} DRS Lane Racing. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              Terms of Service
-            </Link>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <a href="#" className="hover:text-foreground transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Terms
+            </a>
+            <a href="#" className="hover:text-foreground transition-colors">
+              Cookies
+            </a>
           </div>
         </div>
       </div>
-      <div className="racing-stripes h-1" />
     </footer>
   );
 }

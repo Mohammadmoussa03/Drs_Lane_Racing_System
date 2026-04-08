@@ -7,7 +7,7 @@ export function HeroSection() {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Background with gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-card">
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-background">
         {/* Animated racing grid */}
         <div className="absolute inset-0 opacity-5">
           <div 

@@ -1,8 +1,10 @@
 from pathlib import Path
 from datetime import timedelta
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = 'django-insecure-=p=pim3_ne2ya8$ib$@bv+6fr*qb9tl@6+n07%b&*o0+1vvu(q'
 
@@ -150,15 +152,15 @@ F1_POINTS = {
     6: 8,  7: 6,  8: 4,  9: 2,  10: 1,
 }
 
-# ─── Email ───────────────────────────────────────────────────────────────────
-# Dev: print emails to console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'DRS Lane <noreply@drslane.com>'
-FRONTEND_URL = 'http://localhost:5173'   # React dev URL — update for prod
-
-# Production: switch to Mailgun (or any Anymail provider)
-# EMAIL_BACKEND    = 'anymail.backends.mailgun.EmailBackend'
-# ANYMAIL = {'MAILGUN_API_KEY': os.environ.get('MAILGUN_API_KEY')}
+# ─── Email — Gmail SMTP ──────────────────────────────────────────────────────
+EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST         = 'smtp.gmail.com'
+EMAIL_PORT         = 587
+EMAIL_USE_TLS      = True
+EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = 'DRS Lane <mhmadmoussa05@gmail.com>'
+FRONTEND_URL       = 'http://localhost:5173'   # React dev URL — update for prod
 
 # Email token expiry
 EMAIL_VERIFICATION_EXPIRY_HOURS = 24
